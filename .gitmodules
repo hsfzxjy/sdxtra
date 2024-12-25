@@ -1,0 +1,3 @@
+[submodule "sdcpp"]
+	path = sdcpp
+	url = https://github.com/hsfzxjy/stable-diffusion.cpp.git
