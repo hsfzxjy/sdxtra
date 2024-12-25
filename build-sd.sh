@@ -2,7 +2,11 @@
 
 ROOT=$(dirname $(readlink -f $0))
 
-COMMON_ARGS=("-DCMAKE_CUDA_ARCHITECTURES=70;72;75;80;86;87" "-DSD_CUBLAS=ON" "-DCMAKE_CROSSCOMPILING=ON")
+COMMON_ARGS=(
+    "-DCMAKE_CUDA_ARCHITECTURES=86"
+    "-DSD_CUBLAS=ON"
+    "-DSD_BUILD_EXAMPLES=OFF"
+)
 
 function build-shared {
     cd $ROOT/sdcpp/
@@ -21,4 +25,4 @@ function build-static {
 }
 
 build-shared
-build-static
+# build-static
