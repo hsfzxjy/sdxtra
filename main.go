@@ -5,16 +5,22 @@ import (
 	"image/png"
 	"os"
 
+	"github.com/hsfzxjy/sdxtra/internal/db"
 	"github.com/hsfzxjy/sdxtra/internal/ffi"
 )
 
+const DSN = "sqlite3://db.sqlite3?cache=shared&_fk=1"
+
 func main() {
+	if err := db.Migrate(DSN); err != nil {
+		panic(err)
+	}
 	os.Setenv("CUDA_VISIBLE_DEVICES", "1")
 	var models string
 	models = "/models"
 	go func() {
 		for entry := range ffi.GlobalLog() {
-			fmt.Printf("[%d] %s", entry.Level, entry.Text)
+			fmt.Printf("[%d] %s", entry.Level, entry.Message)
 		}
 	}()
 	ctx := ffi.CaptureLog0(ffi.GlobalLog(), nil, ffi.SDCtxParams{

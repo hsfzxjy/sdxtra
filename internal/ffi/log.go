@@ -7,7 +7,17 @@ import (
 	"fmt"
 	"runtime"
 	"sync"
+
+	"github.com/hsfzxjy/sdxtra/internal/log"
 )
+
+func _() {
+	// Ensure that the log levels are consistent between C and Go.
+	var _ = "0"[C.SD_LOG_DEBUG-log.Debug]
+	var _ = "0"[C.SD_LOG_INFO-log.Info]
+	var _ = "0"[C.SD_LOG_WARN-log.Warn]
+	var _ = "0"[C.SD_LOG_ERROR-log.Error]
+}
 
 const endSentinel = ^uintptr(0)
 
@@ -15,11 +25,7 @@ func init() {
 	C.sd_set_log_callback((*[0]byte)(C.handleLog), nil)
 }
 
-type LogEntry struct {
-	Level int32
-	Text  string
-	Data  any
-}
+type LogEntry = log.Entry
 
 type EndWaiter struct {
 	Signify func()
@@ -27,7 +33,7 @@ type EndWaiter struct {
 }
 
 type logRoute struct {
-	data   any
+	owner  any
 	doneCh chan<- struct{}
 	outCh  chan<- LogEntry
 }
@@ -46,10 +52,10 @@ func GlobalLog() chan LogEntry {
 	return globalLog
 }
 
-func (lh *logHandler) addRoute(threadId C.pthread_t, data any, outCh chan<- LogEntry) EndWaiter {
+func (lh *logHandler) addRoute(threadId C.pthread_t, owner any, outCh chan<- LogEntry) EndWaiter {
 	doneCh := make(chan struct{})
 	route := &logRoute{
-		data:   data,
+		owner:  owner,
 		doneCh: doneCh,
 		outCh:  outCh,
 	}
@@ -82,9 +88,9 @@ func goHandleLog(level C.sd_log_level_t, text *C.char, data uintptr, threadId C.
 		return
 	}
 	route.outCh <- LogEntry{
-		Level: int32(level),
-		Text:  C.GoString(text),
-		Data:  route.data,
+		Level:   log.Level(level),
+		Message: C.GoString(text),
+		Owner:   route.owner,
 	}
 }
 
